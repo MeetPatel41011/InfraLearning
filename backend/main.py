@@ -62,6 +62,7 @@ origins = [
     "http://localhost:8888",
     "http://127.0.0.1:8888",
     "https://infra-learning-6dd7e4e5v-meetpatel41011s-projects.vercel.app",
+    "https://infra-learning.vercel.app",
     frontend_url.rstrip("/"),
 ]
 
