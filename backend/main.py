@@ -81,21 +81,10 @@ async def log_requests(request, call_next):
     return response
 
 # CORS
-frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:8888",
-    "http://127.0.0.1:8888",
-    "https://infra-learning-6dd7e4e5v-meetpatel41011s-projects.vercel.app",
-    "https://infra-learning.vercel.app",
-    frontend_url.rstrip("/"),
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origins=["*"], # Allow ALL origins to stop CORS errors for good
+    allow_credentials=False, # Must be False when using ["*"]
     allow_methods=["*"],
     allow_headers=["*"],
 )
