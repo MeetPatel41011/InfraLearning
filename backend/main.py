@@ -159,6 +159,7 @@ def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
         db.refresh(db_image)
         return db_image
     except Exception as e:
+        print(f"UPLOAD ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 if __name__ == "__main__":
