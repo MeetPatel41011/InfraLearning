@@ -140,7 +140,3 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", 8888))
     print(f"Starting server on http://127.0.0.1:{port}...")
     uvicorn.run(app, host="127.0.0.1", port=port)
-ort uvicorn
-    port = int(os.getenv("PORT", 8888))
-    print(f"Starting server on http://127.0.0.1:{port}...")
-    uvicorn.run(app, host="127.0.0.1", port=port)
