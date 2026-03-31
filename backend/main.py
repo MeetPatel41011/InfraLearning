@@ -77,17 +77,22 @@ app.add_middleware(
 # --- ROUTES ---
 @app.get("/")
 def read_root():
-    return {"message": "Infra-Learning API is running! Use /api/health/ to check status."}
+    return {"message": "Infra-Learning API is running!"}
 
+# Health routes
+@app.get("/health/")
 @app.get("/api/health/")
 def health_check():
     return {"status": "ok"}
 
+# Log routes
+@app.get("/logs/", response_model=List[LogResponse])
 @app.get("/api/logs/", response_model=List[LogResponse])
 def read_logs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     logs = db.query(LogEntry).offset(skip).limit(limit).all()
     return logs
 
+@app.post("/logs/", response_model=LogResponse)
 @app.post("/api/logs/", response_model=LogResponse)
 def create_log(log: LogCreate, db: Session = Depends(get_db)):
     db_log = LogEntry(title=log.title, content=log.content)
@@ -96,6 +101,7 @@ def create_log(log: LogCreate, db: Session = Depends(get_db)):
     db.refresh(db_log)
     return db_log
 
+@app.delete("/logs/{log_id}/")
 @app.delete("/api/logs/{log_id}/")
 def delete_log(log_id: int, db: Session = Depends(get_db)):
     db_log = db.query(LogEntry).filter(LogEntry.id == log_id).first()
