@@ -111,17 +111,36 @@ def delete_log(log_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Log deleted successfully"}
 
-UPLOAD_DIR = "tmp/uploads"
-@app.post("/api/upload/")
-def upload_image(file: UploadFile = File(...)):
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    return {"filename": file.filename, "saved_path": file_path}
+@app.get("/images/", response_model=List[ImageResponse])
+@app.get("/api/images/", response_model=List[ImageResponse])
+def get_images(db: Session = Depends(get_db)):
+    return db.query(ImageEntry).order_by(ImageEntry.created_at.desc()).all()
+
+@app.post("/upload/", response_model=ImageResponse)
+@app.post("/api/upload/", response_model=ImageResponse)
+def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    try:
+        # Upload to Cloudinary
+        upload_result = cloudinary.uploader.upload(file.file, folder="infra_learning")
+        
+        # Save to Database
+        db_image = ImageEntry(
+            filename=file.filename,
+            url=upload_result.get("secure_url")
+        )
+        db.add(db_image)
+        db.commit()
+        db.refresh(db_image)
+        return db_image
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
+    port = int(os.getenv("PORT", 8888))
+    print(f"Starting server on http://127.0.0.1:{port}...")
+    uvicorn.run(app, host="127.0.0.1", port=port)
+ort uvicorn
     port = int(os.getenv("PORT", 8888))
     print(f"Starting server on http://127.0.0.1:{port}...")
     uvicorn.run(app, host="127.0.0.1", port=port)
