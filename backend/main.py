@@ -3,12 +3,23 @@ import shutil
 from typing import List
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import create_engine, Column, Integer, String, Text
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from pydantic import BaseModel
 from dotenv import load_dotenv
+import cloudinary
+import cloudinary.uploader
+from datetime import datetime
 
 load_dotenv()
+
+# --- CLOUDINARY SETUP ---
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 
 # --- DATABASE SETUP ---
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./dev.db")
@@ -21,6 +32,13 @@ class LogEntry(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     content = Column(Text)
+
+class ImageEntry(Base):
+    __tablename__ = "images"
+    id = Column(Integer, primary_key=True, index=True)
+    filename = Column(String)
+    url = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 Base.metadata.create_all(bind=engine)
 
@@ -40,6 +58,14 @@ class LogResponse(BaseModel):
     id: int
     title: str
     content: str
+    class Config:
+        from_attributes = True
+
+class ImageResponse(BaseModel):
+    id: int
+    filename: str
+    url: str
+    created_at: datetime
     class Config:
         from_attributes = True
 
