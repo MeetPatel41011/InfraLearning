@@ -1,0 +1,19 @@
+I have successfully set up the Continuous Integration (CI) pipeline so GitHub Actions acts as the gatekeeper for your deployments.
+
+  Here is a summary of all the things I did:
+
+   1. Created a GitHub Actions Workflow (.github/workflows/deploy.yml)
+      * This file configures the "invisible computer" on GitHub.
+      * Whenever you push code or open a pull request to the main branch, it spins up an Ubuntu server and installs Python 3.11.
+      * It navigates to your backend folder, installs your dependencies, and runs automated tests using a temporary local SQLite database so it doesn't need to
+        connect to your live Neon database just to run tests.
+      * The "Green Light" Step: If the tests pass and you are pushing to the main branch, it executes a curl command to ping a special Render Deploy Hook URL. If the
+        tests fail at any point, the workflow stops immediately and the deploy step is skipped—keeping your live site safely on the previous version.
+
+   2. Wrote an Automated Test (backend/test_main.py)
+      * GitHub Actions needs something to test! I created a simple test script that uses a fake client to ping your /api/health endpoint and verifies it returns
+        {"status": "ok"} with a 200 success code.
+
+   3. Updated Dependencies (backend/requirements.txt)
+      * I added two new libraries: pytest (the testing framework that runs the tests) and httpx (used by FastAPI's TestClient to simulate HTTP requests during
+        tests).

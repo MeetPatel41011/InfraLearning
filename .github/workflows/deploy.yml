@@ -1,0 +1,53 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    
+    # We set a default working directory since we are testing the backend
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' # Change to your preferred Python version
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Automated Tests
+        # We use a local sqlite database for testing to avoid needing a live Postgres DB during CI
+        env:
+          DATABASE_URL: sqlite:///./test.db
+        run: |
+          pytest
+
+      - name: Trigger Render Deployment
+        # Only deploy if tests pass AND we are pushing to the main branch
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$deploy_url" ]; then
+            echo "Error: RENDER_DEPLOY_HOOK_URL secret is not set in GitHub."
+            echo "Please add it in your GitHub repository: Settings -> Secrets and variables -> Actions"
+            exit 1
+          fi
+          echo "Automated tests passed. Giving Render the green light to deploy..."
+          curl -X POST "$deploy_url"
