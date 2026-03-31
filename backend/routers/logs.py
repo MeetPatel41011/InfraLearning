@@ -1,20 +1,26 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-import models, schemas
-from database import get_db
+try:
+    import models
+    import schemas
+    from database import get_db
+except ImportError:
+    from .. import models
+    from .. import schemas
+    from ..database import get_db
 
 router = APIRouter()
 
-@router.post("/logs", response_model=schemas.LogResponse)
+@router.post("/logs/", response_model=schemas.LogResponse)
 def create_log(log: schemas.LogCreate, db: Session = Depends(get_db)):
-    db_log = models.LogEntry(**log.model_dump())
+    db_log = models.LogEntry(title=log.title, content=log.content)
     db.add(db_log)
     db.commit()
     db.refresh(db_log)
     return db_log
 
-@router.get("/logs", response_model=List[schemas.LogResponse])
+@router.get("/logs/", response_model=List[schemas.LogResponse])
 def read_logs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     logs = db.query(models.LogEntry).offset(skip).limit(limit).all()
     return logs
