@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8888/api').replace(/\/$/, '');
+console.log("Using API URL:", API_URL);
 
 interface Log {
   id: number;
@@ -22,7 +23,7 @@ function App() {
 
   const checkHealth = async () => {
     try {
-      const res = await fetch(`${API_URL}/health`);
+      const res = await fetch(`${API_URL}/health/`);
       const data = await res.json();
       setHealth(data.status);
     } catch (e) {
@@ -32,9 +33,13 @@ function App() {
 
   const fetchLogs = async () => {
     try {
-      const res = await fetch(`${API_URL}/logs`);
+      const res = await fetch(`${API_URL}/logs/`);
       const data = await res.json();
-      setLogs(data);
+      if (Array.isArray(data)) {
+        setLogs(data);
+      } else {
+        console.error('Expected array from /logs/, got:', data);
+      }
     } catch (e) {
       console.error('Failed to fetch logs', e);
     }
@@ -43,22 +48,29 @@ function App() {
   const createLog = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await fetch(`${API_URL}/logs`, {
+      const response = await fetch(`${API_URL}/logs/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, content }),
       });
-      setTitle('');
-      setContent('');
-      fetchLogs();
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API Error:', errorData);
+        alert(`Error: ${JSON.stringify(errorData)}`);
+      } else {
+        setTitle('');
+        setContent('');
+        fetchLogs();
+      }
     } catch (e) {
       console.error('Failed to create log', e);
+      alert('Network error: Is the backend running?');
     }
   };
 
   const deleteLog = async (id: number) => {
     try {
-      await fetch(`${API_URL}/logs/${id}`, { method: 'DELETE' });
+      await fetch(`${API_URL}/logs/${id}/`, { method: 'DELETE' });
       fetchLogs();
     } catch (e) {
       console.error('Failed to delete log', e);
@@ -70,7 +82,7 @@ function App() {
     const formData = new FormData();
     formData.append('file', file);
     try {
-      const res = await fetch(`${API_URL}/upload`, {
+      const res = await fetch(`${API_URL}/upload/`, {
         method: 'POST',
         body: formData,
       });
